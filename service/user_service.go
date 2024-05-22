@@ -8,7 +8,7 @@ import (
 
 type UserService interface {
 	Create(user request.CreateUserReq)
-	Update(user request.UpdateUserReq)
+	Update(user request.UpdateUserReq) error
 	Delete(userId int) error
 	FindById(userId int) (*Models.User, error)
 	FindAll() []response.UserResponse

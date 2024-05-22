@@ -52,15 +52,21 @@ func (u *UserEpoImpl) Save(user Models.User) error {
 }
 
 func (u *UserEpoImpl) Update(user Models.User) error {
-	var Updateuser = request.UpdateUserReq{
+	// Define the struct for updating the user
+	var updateUserReq = request.UpdateUserReq{
 		Id:    user.Id,
 		Name:  user.Name,
 		Email: user.Email,
 	}
-	result := u.DB.Model(&user).Updates(Updateuser)
-	if err := result; err != nil {
-		return err.Error
+
+	// Perform the update using GORM
+	result := u.DB.Model(&Models.User{}).Where("id = ?", user.Id).Updates(updateUserReq)
+
+	// Check for errors during the update
+	if result.Error != nil {
+		return result.Error
 	}
+
 	return nil
 }
 

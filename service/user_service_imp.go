@@ -73,13 +73,13 @@ func (u *UserServiceImp) FindById(usersId int) (*Models.User, error) {
 	//fmt.Println(userResponse)
 	return userResponse, nil
 }
-func (u *UserServiceImp) Update(users request.UpdateUserReq) {
+func (u *UserServiceImp) Update(users request.UpdateUserReq) error {
 	userData, err := u.usersRepository.FindById(users.Id)
 	if err != nil {
-		return
+		return err
 	}
 	userData.Name = users.Name
 	userData.Email = users.Email
 	u.usersRepository.Save(userData)
-	return
+	return nil
 }

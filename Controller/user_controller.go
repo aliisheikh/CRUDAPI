@@ -41,23 +41,27 @@ func (userController *UserController) Create(ctx *gin.Context) {
 	return
 
 }
-
 func (userController *UserController) Update(c *gin.Context) {
-	updateuserrequest := request.UpdateUserReq{}
-	err := c.ShouldBindJSON(&updateuserrequest)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+	// Parse the JSON request body into update user request struct
+	var updateuserrequest request.UpdateUserReq
+	if err := c.ShouldBindJSON(&updateuserrequest); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user data"})
 		return
 	}
-	userController.userService.Update(updateuserrequest)
+
+	// Call the service method to update the user
+	if err := userController.userService.Update(updateuserrequest); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})
+		return
+	}
+
+	// Respond with success message
 	webResponse := response.WebResponse{
 		Code:   http.StatusOK,
 		Status: "success",
 		Data:   nil,
 	}
-	c.Header("Content-Type", "application/json")
 	c.JSON(http.StatusOK, webResponse)
-
 }
 
 func (userController *UserController) Delete(c *gin.Context) {
@@ -87,6 +91,7 @@ func (userController *UserController) FindAll(c *gin.Context) {
 	}
 	c.Header("Content-Type", "application/json")
 	c.JSON(http.StatusOK, webResponse)
+
 }
 
 //
@@ -98,9 +103,12 @@ func (userController *UserController) FindById(c *gin.Context) {
 	userId := c.Param("userId")
 	id, err := strconv.Atoi(userId)
 	if err != nil {
-		panic(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to Find the user"})
+		return
 
 	}
+	c.JSON(http.StatusOK, gin.H{"message": "User Id Found successfully"})
+
 	userController.userService.FindById(id)
 	webResponse := response.WebResponse{
 		Code:   http.StatusOK,

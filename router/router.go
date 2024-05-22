@@ -14,9 +14,9 @@ func NewRouter(userController *Controller.UserController) *gin.Engine {
 	baseRouter := router.Group("api")
 	userRouter := baseRouter.Group("/user")
 	userRouter.POST("", userController.Create)
-	userRouter.PUT("userId", userController.Update)
+	userRouter.PUT(":userId", userController.Update)
 	userRouter.DELETE(":userId", userController.Delete)
-	userRouter.GET("/:userId", userController.FindById)
+	userRouter.GET(":userId", userController.FindById)
 	userRouter.PATCH("", userController.FindAll)
 	return router
 
