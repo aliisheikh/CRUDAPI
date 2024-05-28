@@ -6,8 +6,10 @@ import (
 	"ProjectCRUD/service"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 type UserController struct {
@@ -20,28 +22,61 @@ func NewUserController(userService service.UserService) *UserController {
 	}
 }
 
+// Original Create function
+
 func (userController *UserController) Create(ctx *gin.Context) {
-	createuserrequest := request.CreateUserReq{}
-	fmt.Println(createuserrequest)
-	err := ctx.ShouldBindJSON(&createuserrequest)
-	fmt.Println(err)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete user"})
+	// Initialize a CreateUserReq instance
+	var createuserrequest request.CreateUserReq
+
+	// Bind JSON data from the request to createuserrequest
+	if err := ctx.ShouldBindJSON(&createuserrequest); err != nil {
+		// If JSON binding fails, respond with a bad request error
+		var errorMsg string
+		if verr, ok := err.(validator.ValidationErrors); ok {
+			var fields []string
+			for _, fieldErr := range verr {
+				fieldName := fieldErr.StructField()
+				fields = append(fields, fieldName)
+			}
+			errorMsg = fmt.Sprintf("Missing or invalid fields: %s", strings.Join(fields, ", "))
+		} else {
+			errorMsg = "Failed to Parse JSON"
+		}
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": errorMsg})
 		return
 	}
-	userController.userService.Create(createuserrequest)
-	webResponse := response.WebResponse{
-		Code:   http.StatusOK,
-		Status: "success",
-		Data:   nil,
+
+	// Create the user using the userService
+	if err := userController.userService.Create(createuserrequest); err != nil {
+		// duplicate email error
+		if strings.Contains(err.Error(), "Duplicate entry") {
+			ctx.JSON(http.StatusConflict, gin.H{"error": "Email already exists"})
+			return
+		}
+
+		// If user creation fails, respond with an internal server error
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "email already exists"})
+		return
 	}
-	ctx.Header("Content-Type", "application/json")
-	ctx.JSON(http.StatusOK, webResponse)
 
-	return
-
+	// Respond with a success message and status code 201 Created
+	webResponse := response.WebResponse{
+		Code:   http.StatusCreated,
+		Status: "success",
+		Data:   createuserrequest, // You can choose to include the created user data here
+	}
+	ctx.JSON(http.StatusCreated, webResponse)
 }
+
+// Update user
 func (userController *UserController) Update(c *gin.Context) {
+	userId := c.Param("userId")
+	id, err := strconv.Atoi(userId)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
 	// Parse the JSON request body into update user request struct
 	var updateuserrequest request.UpdateUserReq
 	if err := c.ShouldBindJSON(&updateuserrequest); err != nil {
@@ -49,21 +84,27 @@ func (userController *UserController) Update(c *gin.Context) {
 		return
 	}
 
+	// Set the ID field of UpdateUserRequest with the id value
+	updateuserrequest.Id = id
+
 	// Call the service method to update the user
 	if err := userController.userService.Update(updateuserrequest); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})
 		return
 	}
 
-	// Respond with success message
-	webResponse := response.WebResponse{
-		Code:   http.StatusOK,
-		Status: "success",
-		Data:   nil,
+	// Fetch the updated user data
+	updatedUser, err := userController.userService.FindById(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch updated user data"})
+		return
 	}
-	c.JSON(http.StatusOK, webResponse)
+
+	// Respond with success message and updated user data
+	c.JSON(http.StatusOK, gin.H{"data": updatedUser})
 }
 
+// DELETE USER
 func (userController *UserController) Delete(c *gin.Context) {
 	userId := c.Param("userId")
 	id, err := strconv.Atoi(userId)
@@ -94,27 +135,25 @@ func (userController *UserController) FindAll(c *gin.Context) {
 
 }
 
-//
-//func (userController *UserController) FindById(context *gin.Context) {
-//
-//}
-
 func (userController *UserController) FindById(c *gin.Context) {
 	userId := c.Param("userId")
+	fmt.Println("userId", userId)
 	id, err := strconv.Atoi(userId)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to Find the user"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
 		return
-
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "User Id Found successfully"})
 
-	userController.userService.FindById(id)
-	webResponse := response.WebResponse{
-		Code:   http.StatusOK,
-		Status: "success",
-		Data:   nil,
+	u, err := userController.userService.FindById(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to find the user"})
+		return
 	}
-	c.Header("Content-Type", "application/json")
-	c.JSON(http.StatusOK, webResponse)
+
+	if u == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": u})
 }

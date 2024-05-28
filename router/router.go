@@ -8,16 +8,25 @@ import (
 
 func NewRouter(userController *Controller.UserController) *gin.Engine {
 	router := gin.Default()
-	router.GET("", func(c *gin.Context) {
-		c.JSON(http.StatusOK, "welcome Home")
-	})
-	baseRouter := router.Group("api")
-	userRouter := baseRouter.Group("/user")
-	userRouter.POST("", userController.Create)
-	userRouter.PUT(":userId", userController.Update)
-	userRouter.DELETE(":userId", userController.Delete)
-	userRouter.GET(":userId", userController.FindById)
-	userRouter.PATCH("", userController.FindAll)
-	return router
 
+	// Define a route for the home endpoint
+	router.GET("", func(c *gin.Context) {
+		c.JSON(http.StatusOK, "Welcome Home")
+	})
+
+	// Group routes under "/api"
+	api := router.Group("/api")
+
+	// Group user-related routes under "/api/user"
+	user := api.Group("/user")
+	{
+		// Define CRUD routes for users
+		user.POST("", userController.Create)
+		user.PUT(":userId", userController.Update)
+		user.DELETE(":userId", userController.Delete)
+		user.GET(":userId", userController.FindById)
+		user.PATCH("", userController.FindAll)
+	}
+
+	return router
 }
