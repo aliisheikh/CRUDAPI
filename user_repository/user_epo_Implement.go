@@ -11,16 +11,41 @@ type UserEpoImpl struct {
 	DB *gorm.DB
 }
 
-func (u UserEpoImpl) Delete(userId int) error {
-	var u_user Models.User
-	result := u.DB.Where("id=?", userId).Delete(&u_user)
-
-	if err := result; err != nil {
-		return err.Error
+func (u *UserEpoImpl) Delete(userID int) error {
+	// Fetch the user by ID
+	user := Models.User{Id: userID}
+	result := u.DB.Where(&user).First(&user)
+	if result.Error != nil {
+		// Check if the user doesn't exist
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return errors.New("user not found")
+		}
+		// Return any other errors encountered during user retrieval
+		return result.Error
 	}
-	return nil
 
+	// Delete the user
+	result = u.DB.Delete(&user)
+	if result.Error != nil {
+		// Return any errors encountered during deletion
+		return result.Error
+	}
+
+	// No error occurred, user deleted successfully
+	return nil
 }
+
+//
+//func (u UserEpoImpl) Delete(userId int) error {
+//	var u_user Models.User
+//	result := u.DB.Where("id=?", userId).Delete(&u_user)
+//
+//	if err := result; err != nil {
+//		return err.Error
+//	}
+//	return nil
+//
+//}
 
 func (u *UserEpoImpl) FindAll() []Models.User {
 	//panic("can't implement me")
@@ -66,6 +91,7 @@ func (u *UserEpoImpl) Save1(user Models.User) error {
 }
 
 // Save for Update,GET and DELETE
+
 func (u *UserEpoImpl) Save(user Models.User) error {
 	// Check if the user already exists
 	existingUser, err := u.FindById(user.Id)
@@ -81,19 +107,45 @@ func (u *UserEpoImpl) Save(user Models.User) error {
 		// Handle other errors
 		return err
 	}
-	// Update the existing user's data
-	existingUser.UserName = user.UserName
-	existingUser.Email = user.Email
-	existingUser.Name = user.Name
 
-	// Save the updated user data
-	result := u.DB.Save(existingUser)
+	// Update only the specified fields in the database
+	result := u.DB.Model(&existingUser).Updates(user)
 	if result.Error != nil {
 		return result.Error
 	}
 
 	return nil
 }
+
+//
+//func (u *UserEpoImpl) Save(user Models.User) error {
+//	// Check if the user already exists
+//	existingUser, err := u.FindById(user.Id)
+//	if err != nil {
+//		// If the user does not exist, create a new record
+//		if errors.Is(err, gorm.ErrRecordNotFound) {
+//			result := u.DB.Create(&user)
+//			if result.Error != nil {
+//				return result.Error
+//			}
+//			return nil
+//		}
+//		// Handle other errors
+//		return err
+//	}
+//	// Update the existing user's data
+//	existingUser.UserName = user.UserName
+//	existingUser.Email = user.Email
+//	existingUser.Name = user.Name
+//
+//	// Save the updated user data
+//	result := u.DB.Save(existingUser)
+//	if result.Error != nil {
+//		return result.Error
+//	}
+//
+//	return nil
+//}
 
 func (u *UserEpoImpl) Update(user Models.User) error {
 	// Check if the user exists before updating
@@ -104,7 +156,7 @@ func (u *UserEpoImpl) Update(user Models.User) error {
 	}
 
 	// Update the existing user's data
-	existingUser.UserName = user.UserName
+	//	existingUser.UserName = user.UserName
 	existingUser.Email = user.Email
 	existingUser.Name = user.Name
 

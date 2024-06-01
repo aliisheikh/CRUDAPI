@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-playground/validator/v10"
+	"gorm.io/gorm"
 	"strings"
 )
 
@@ -23,47 +24,11 @@ func NewUserServiceImp(usersRepository user_repository.UserEpoImpl, validate *va
 	}
 }
 
-//var ErrDuplicateEmail = errors.New("email address already exists")
-//
-//func (u *UserServiceImp) Create(users request.CreateUserReq) error {
-//	err := u.validate.Struct(users)
-//	if err != nil {
-//		return err
-//	}
-//
-//	usersModel := Models.User{
-//		UserName: users.UserName,
-//		Email:    users.Email,
-//		Name:     users.Name,
-//	}
-//
-//	err = u.usersRepository.Save1(usersModel)
-//	if err != nil {
-//		// Check if the error message indicates a unique constraint violation
-//		if isDuplicateEmailError(err) {
-//			return ErrDuplicateEmail
-//		}
-//		// Handle other errors
-//		return err
-//	}
-//
-//	return nil
-//}
-//
-//// Function to check if the error message indicates a duplicate email error
-//func isDuplicateEmailError(err error) bool {
-//	return err != nil && (strings.Contains(err.Error(), "Duplicate entry") ||
-//		strings.Contains(err.Error(), "duplicate key value"))
-//}
-
-// Create implement userService
-//
-
 func (u *UserServiceImp) Create(users request.CreateUserReq) error {
 
-	if users.UserName == "" {
-		return errors.New("username is required")
-	}
+	//if users.UserName == "" {
+	//	return errors.New("username is required")
+	//}
 	if users.Name == "" {
 		return errors.New("name is required")
 	}
@@ -78,9 +43,9 @@ func (u *UserServiceImp) Create(users request.CreateUserReq) error {
 	}
 
 	usersModel := Models.User{
-		UserName: users.UserName,
-		Email:    users.Email,
-		Name:     users.Name,
+		//UserName: users.UserName,
+		Email: users.Email,
+		Name:  users.Name,
 	}
 
 	err = u.usersRepository.Save1(usersModel)
@@ -99,12 +64,25 @@ func (u *UserServiceImp) Create(users request.CreateUserReq) error {
 }
 
 // Delete implements userService
-
-func (u *UserServiceImp) Delete(usersId int) error {
-	err := u.usersRepository.Delete(usersId)
-	if err != nil {
+func (u *UserServiceImp) Delete(userID int) error {
+	// Check if the user with the given ID exists
+	_, err := u.usersRepository.FindById(userID)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		// If the user doesn't exist, return nil indicating successful deletion
+		return nil
+	} else if err != nil {
+		// If an error occurred while retrieving the user, return the error
 		return err
 	}
+
+	// Attempt to delete the user
+	err = u.usersRepository.Delete(userID)
+	if err != nil {
+		// If an error occurred while deleting the user, return the error
+		return err
+	}
+
+	// User successfully deleted
 	return nil
 }
 
@@ -115,9 +93,9 @@ func (u *UserServiceImp) FindAll() []response.UserResponse {
 	var users []response.UserResponse
 	for _, v := range result {
 		user := response.UserResponse{
-			Id:       v.Id,
-			UserName: v.UserName,
-			Name:     v.Name,
+			Id: v.Id,
+			//UserName: v.UserName,
+			Name: v.Name,
 		}
 		users = append(users, user)
 	}
@@ -130,23 +108,29 @@ func (u *UserServiceImp) FindById(usersId int) (*Models.User, error) {
 		return nil, err
 	}
 	userResponse := &Models.User{
-		Id:       userData.Id,
-		UserName: userData.UserName,
-		Email:    userData.Email,
-		Name:     userData.Name,
+		Id: userData.Id,
+		//UserName: userData.UserName,
+		Email: userData.Email,
+		Name:  userData.Name,
 	}
 	//fmt.Println(userResponse)
 	return userResponse, nil
 }
+
 func (u *UserServiceImp) Update(user request.UpdateUserReq) error {
 	userData, err := u.usersRepository.FindById(user.Id)
 	if err != nil {
 		return err
 	}
-
-	userData.UserName = user.UserName
-	userData.Email = user.Email
-	userData.Name = user.Name
+	//if userData.UserName != "" {
+	//	userData.UserName = user.UserName
+	//}
+	if userData.Email != "" {
+		userData.Email = user.Email
+	}
+	if userData.Name != "" {
+		userData.Name = user.Name
+	}
 
 	if err := u.usersRepository.Save(*userData); err != nil {
 		return err

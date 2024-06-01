@@ -7,9 +7,9 @@ import (
 )
 
 type CreateUserReq struct {
-	UserName string `json:"username" binding:"required,min=2,max=200"`
-	Email    string `json:"email" binding:"required,min=2,max=200"`
-	Name     string `json:"name" binding:"required,min=2,max=200"`
+	//UserName string `json:"username" binding:"required,min=2,max=200"`
+	Email string `json:"email" binding:"required,min=2,max=200"`
+	Name  string `json:"name" binding:"required,min=2,max=200"`
 }
 
 func CreateUser(c *gin.Context) {
