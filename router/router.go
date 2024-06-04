@@ -31,6 +31,7 @@ func NewRouter(userController *Controller.UserController) *gin.Engine {
 }
 
 func NewRouterprof(profileController *Controller.ProfileController) *gin.Engine {
+
 	profilerouter := gin.Default()
 
 	// Define a route for the home endpoint
@@ -46,9 +47,9 @@ func NewRouterprof(profileController *Controller.ProfileController) *gin.Engine 
 	{
 		// Define CRUD routes for users
 		profile.POST("", profileController.CreateP)
-		profile.PUT(":userId", profileController.UpdateP)
-		profile.DELETE(":userId", profileController.DeleteP)
-		profile.GET(":userId", profileController.FindByIdP)
+		profile.PUT(":profId", profileController.UpdateP)
+		profile.DELETE(":profId", profileController.DeleteP)
+		profile.GET(":profId", profileController.FindByIdP)
 
 	}
 	return profilerouter

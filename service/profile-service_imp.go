@@ -8,8 +8,6 @@ import (
 	"fmt"
 	"github.com/go-playground/validator/v10"
 	"gorm.io/gorm"
-	"strconv"
-	"strings"
 )
 
 type ProfileServiceImp struct {
@@ -26,9 +24,7 @@ func NewProfileServiceImp(profileRepo user_repository.ProfileEPOImpl, validate *
 
 func (p *ProfileServiceImp) CreateP(profile request.CreateProfileReq) error {
 
-	//if users.UserName == "" {
-	//	return errors.New("username is required")
-	//}
+	// Check if the field is empty
 	if profile.ProfileName == "" {
 		return errors.New("profileName is required")
 	}
@@ -40,29 +36,32 @@ func (p *ProfileServiceImp) CreateP(profile request.CreateProfileReq) error {
 		return errors.New("address is required")
 
 	}
-	if profile.Age == 0 {
-		return errors.New("age is required")
+	//if profile.Age != "" {
+	//	return errors.New("age is required")
+	//
+	//}
 
-	}
 	fmt.Println("kkkkk", profile)
-	err := p.validate.Struct(profile)
-	if err != nil {
-		return err
-	}
-
+	//if err := p.validate.Struct(profile); err != nil {
+	//	return err
+	//}
+	//ageInt, err := strconv.Atoi(profile.Age)
+	//if err != nil {
+	//	return errors.New("age is invalid")
+	//}
 	profileModel := Models.ProfileModel{
 
 		ProfileName: profile.ProfileName,
 		Phone:       profile.Phone,
 		Address:     profile.Address,
-		Age:         profile.Age,
+		//Age:         strconv.Itoa(ageInt),
 	}
 
-	err = p.profilerepository.SaveCreate(profileModel)
+	err := p.profilerepository.SaveCreate(profileModel)
 	if err != nil {
-		if strings.Contains(err.Error(), "Duplicate entry") {
-			return errors.New("profileName already exists")
-		}
+		//if strings.Contains(err.Error(), "Duplicate entry") {
+		//	return errors.New("profileName already exists")
+		//}
 		fmt.Println(err)
 		return err
 	}
@@ -107,7 +106,7 @@ func (p *ProfileServiceImp) FindByIdP(profileId int) (*Models.ProfileModel, erro
 		ProfileName: userData.ProfileName,
 		Phone:       userData.Phone,
 		Address:     userData.Address,
-		Age:         userData.Age,
+		//Age:         userData.Age,
 	}
 	//fmt.Println(userResponse)
 	return profileResponse, nil
@@ -132,17 +131,17 @@ func (p *ProfileServiceImp) UpdateP(profile request.UpdateProfileReq) error {
 	if userData.Address != "" {
 		userData.Address = profile.Address
 	}
-	if profile.Age != "" {
-		// Convert profile.Age from string to int
-		age, err := strconv.Atoi(profile.Age)
-		if err != nil {
-			// Handle error if conversion fails
-			return err
-		}
+	//if profile.Age != "" {
+	//	// Convert profile.Age from string to int
+	//	age, err := strconv.Atoi(profile.Age)
+	//	if err != nil {
+	//		// Handle error if conversion fails
+	//		return err
+	//	}
 
-		// Assign converted age to userData.Age
-		userData.Age = age
-	}
+	// Assign converted age to userData.Age
+	//	userData.Age = strconv.Itoa(age)
+	//}
 	if err := p.profilerepository.Save2(*userData); err != nil {
 		return err
 	}

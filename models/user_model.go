@@ -5,6 +5,7 @@ import (
 )
 
 type User struct {
+	//gorm.Model
 	Id int `gorm:"type:int;primary_key"`
 	//UserName string `gorm:"type:varchar(255);column:username"`
 	Email    string `gorm:"type:varchar(255);column:email;unique"`

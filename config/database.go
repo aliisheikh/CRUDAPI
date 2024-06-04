@@ -8,6 +8,10 @@ import (
 	"gorm.io/gorm"
 )
 
+//os.GETENV() main
+
+//os.GETENV("DBHOST")  .env DBHOST=localhost
+
 const (
 	host     = "localhost"
 	port     = 3306

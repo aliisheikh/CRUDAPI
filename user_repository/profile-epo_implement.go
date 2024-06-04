@@ -3,8 +3,8 @@ package user_repository
 import (
 	Models "ProjectCRUD/models"
 	"errors"
+	"fmt"
 	"gorm.io/gorm"
-	"strings"
 )
 
 type ProfileEPOImpl struct {
@@ -71,7 +71,7 @@ func (p *ProfileEPOImpl) UpdateP(profile Models.ProfileModel) error {
 	// Update the existing user's data
 	//	existingUser.UserName = user.UserName
 	existingUser.ProfileName = profile.ProfileName
-	existingUser.Age = profile.Age
+	//existingUser.Age = profile.Age
 	existingUser.Phone = profile.Phone
 	existingUser.Address = profile.Address
 
@@ -117,10 +117,10 @@ func (p *ProfileEPOImpl) SaveCreate(profile Models.ProfileModel) error {
 	// Save the user directly, GORM will handle whether it's a new user or an existing one
 	result := p.DB.Save(&profile)
 	if result.Error != nil {
-		if strings.Contains(result.Error.Error(), "duplicate key value violates unique constraint") {
-			return errors.New("user already exists")
-		}
-		return result.Error
+		//if strings.Contains(result.Error.Error(), "duplicate key value violates unique constraint") {
+		//	return errors.New("user already exists")
+		//}
+		return fmt.Errorf("Failed to save the Profile:%w", result.Error)
 	}
 	return nil
 }
