@@ -2,16 +2,11 @@ package Controller
 
 import (
 	"ProjectCRUD/data/request"
-	"ProjectCRUD/data/request/response"
 	"ProjectCRUD/service"
-	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
-	"gorm.io/gorm"
 	"net/http"
 	"strconv"
-	"strings"
 )
 
 type ProfileController struct {
@@ -27,132 +22,174 @@ func NewProfileController(profileService service.ProfileService) *ProfileControl
 // Create Profile Function
 
 func (profilecontroller *ProfileController) CreateP(ctx *gin.Context) {
-	// Initialize a CreateUserReq instance
+	// Extract the userId from the URL parameter
+	userIDStr := ctx.Param("userId")
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	// Initialize a CreateProfileReq instance
 	var createProfileRequest request.CreateProfileReq
 
 	// Bind JSON data from the request to createProfileRequest
 	if err := ctx.ShouldBindJSON(&createProfileRequest); err != nil {
-		// If JSON binding fails, respond with a bad request error
-		var errorMsg string
-		if verr, ok := err.(validator.ValidationErrors); ok {
-			var fields []string
-			for _, fieldErr := range verr {
-				fieldName := fieldErr.StructField()
-				fields = append(fields, fieldName)
-			}
-			errorMsg = fmt.Sprintf("Missing or invalid fields: %s", strings.Join(fields, ", "))
-		} else {
-			errorMsg = "Failed to Parse Profile JSON"
-		}
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": errorMsg})
+		fmt.Println(err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data"})
 		return
 	}
 
-	// Create the user using the profileService
-	if err := profilecontroller.profileService.CreateP(createProfileRequest); err != nil {
-		// duplicate profile error
-		//if strings.Contains(err.Error(), "Duplicate entry") {
-		//	ctx.JSON(http.StatusConflict, gin.H{"error": "ProfileName already exists"})
-		//	return
-		//}
+	// Set the UserID from the URL parameter
+	if len(createProfileRequest.Phone) < 1 || len(createProfileRequest.Phone) > 11 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Phone number must be between 1 and 11 characters"})
+		return
+	}
 
-		// If user creation fails, respond with an internal server error
-		fmt.Println(err)
+	createProfileRequest.UserId = userID
+
+	// Create the profile using the profileService
+	if err := profilecontroller.profileService.CreateP(createProfileRequest); err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create Profile"})
 		return
 	}
 
 	// Respond with a success message and status code 201 Created
-	webResponse := response.WebResponse{
-		Code:   http.StatusCreated,
-		Status: "success",
-		Data:   createProfileRequest, // You can choose to include the created user data here
-	}
-	ctx.JSON(http.StatusCreated, webResponse)
+	ctx.JSON(http.StatusCreated, gin.H{"message": "Profile created successfully"})
 }
 
 // Update profile controller
 
 func (profilecontroller *ProfileController) UpdateP(c *gin.Context) {
 	profId := c.Param("profId")
-	id, err := strconv.Atoi(profId)
+	userId := c.Param("userId")
+
+	profIdInt, err := strconv.Atoi(profId)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid profile ID"})
+		return
+	}
+
+	userIdInt, err := strconv.Atoi(userId)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
 		return
 	}
 
 	// Parse the JSON request body into update user request struct
-	var updateprofilerequest request.UpdateProfileReq
-	if err := c.ShouldBindJSON(&updateprofilerequest); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid profile data"})
+	var updateProfileRequest request.UpdateProfileReq
+	if err := c.ShouldBindJSON(&updateProfileRequest); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data"})
+		return
+	}
+	if updateProfileRequest.ProfileName == "" && updateProfileRequest.Phone == "" && updateProfileRequest.Address == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "At least one field is required for the update"})
 		return
 	}
 
-	// Set the ID field of UpdateUserRequest with the id value
-	updateprofilerequest.ProfileId = id
+	if len(updateProfileRequest.Phone) < 1 || len(updateProfileRequest.Phone) > 11 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Phone number must be between 1 and 11 characters"})
+		return
+	}
+
+	// Set the ID fields of UpdateProfileRequest with the values from the path
+	updateProfileRequest.ProfileId = profIdInt
+	updateProfileRequest.UserId = userIdInt
 
 	// Call the service method to update the user
-	if err := profilecontroller.profileService.UpdateP(updateprofilerequest); err != nil {
+	if err := profilecontroller.profileService.UpdateP(updateProfileRequest); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update profile"})
 		return
 	}
 
-	// Fetch the updated user data
-	updatedProfile, err := profilecontroller.profileService.FindByIdP(id)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch updated profile data"})
-		return
-	}
-
-	// Respond with success message and updated user data
-	c.JSON(http.StatusOK, gin.H{"data": updatedProfile})
+	// Respond with success message
+	c.JSON(http.StatusOK, gin.H{"message": "Profile updated successfully"})
 }
 
-//DELETEP function for profile
-
-// DELETE USER
+// DELETE Profile
 func (profilecontroller *ProfileController) DeleteP(c *gin.Context) {
 	profId := c.Param("profId")
-	id, err := strconv.Atoi(profId)
+	userId := c.Param("userId")
+
+	profIdInt, err := strconv.Atoi(profId)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid profile ID"})
 		return
 	}
 
-	// Attempt to delete the user
-	err = profilecontroller.profileService.DeleteP(id)
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		c.JSON(http.StatusOK, gin.H{"error": "Failed to delete the Profile"})
-		return
-	} else if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "profile already been deleted"})
+	userIdInt, err := strconv.Atoi(userId)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "profile deleted successfully"})
+	// Attempt to delete the profile
+	err = profilecontroller.profileService.DeleteP(userIdInt, profIdInt)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to delete the profile"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Profile deleted successfully"})
 }
 
 // FindById of Profile
 
 func (profilecontroller *ProfileController) FindByIdP(c *gin.Context) {
 	profId := c.Param("profId")
-	fmt.Println("profId", profId)
-	id, err := strconv.Atoi(profId)
+	userId := c.Param("userId")
+
+	profIdInt, err := strconv.Atoi(profId)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid profile ID"})
 		return
 	}
 
-	p, err := profilecontroller.profileService.FindByIdP(id)
+	userIdInt, err := strconv.Atoi(userId)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	// Retrieve the profile by ID
+	profile, err := profilecontroller.profileService.FindByIdP(userIdInt, profIdInt)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to find the profile"})
 		return
 	}
 
-	if p == nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "profile not found"})
+	// If profile is not found, return an error
+	if profile == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Profile not found"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": p})
+	c.JSON(http.StatusOK, gin.H{"data": profile})
+}
+
+// Find all profiles against the single user
+func (profileController *ProfileController) FindAllProfilesByUserID(ctx *gin.Context) {
+	// Extract the user ID from the request parameters
+	userIDStr := ctx.Param("userId")
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	// Call the service method to fetch all profiles by user ID
+	profiles, err := profileController.profileService.FindAllProfilesByUserID(userID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch profiles", "Internal": err.Error()})
+		return
+	}
+
+	// If no profiles are found, return an appropriate message
+	if len(profiles) == 0 {
+		ctx.JSON(http.StatusNotFound, gin.H{"message": "No profiles found for this user"})
+		return
+	}
+
+	// Respond with the list of profiles and associated user details
+	ctx.JSON(http.StatusOK, gin.H{"data": profiles})
 }

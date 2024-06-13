@@ -74,6 +74,7 @@ func (userController *UserController) Create(ctx *gin.Context) {
 // Update user
 
 func (userController *UserController) Update(c *gin.Context) {
+
 	userId := c.Param("userId")
 	id, err := strconv.Atoi(userId)
 	if err != nil {
@@ -88,6 +89,10 @@ func (userController *UserController) Update(c *gin.Context) {
 		return
 	}
 
+	if updateuserrequest.Id == 0 && updateuserrequest.Email == "" && updateuserrequest.Name == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "At least one field is required for the update"})
+		return
+	}
 	// Set the ID field of UpdateUserRequest with the id value
 	updateuserrequest.Id = id
 
@@ -109,6 +114,7 @@ func (userController *UserController) Update(c *gin.Context) {
 }
 
 // DELETE USER
+
 func (userController *UserController) Delete(c *gin.Context) {
 	userId := c.Param("userId")
 	id, err := strconv.Atoi(userId)
@@ -127,9 +133,8 @@ func (userController *UserController) Delete(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
+	c.JSON(http.StatusOK, gin.H{"message": "User and associated profiles deleted successfully"})
 }
-
 func (userController *UserController) FindById(c *gin.Context) {
 	userId := c.Param("userId")
 	fmt.Println("userId", userId)

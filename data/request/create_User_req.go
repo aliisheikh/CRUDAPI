@@ -8,6 +8,7 @@ import (
 
 type CreateUserReq struct {
 	//UserName string `json:"username" binding:"required,min=2,max=200"`
+	//Id    int    `form:"id" json:"id" binding:"required"`
 	Email string `json:"email" binding:"required,min=2,max=200"`
 	Name  string `json:"name" binding:"required,min=2,max=200"`
 }

@@ -44,6 +44,7 @@ func (u *UserServiceImp) Create(users request.CreateUserReq) error {
 
 	usersModel := Models.User{
 		//UserName: users.UserName,
+		//Id:    users.Id,
 		Email: users.Email,
 		Name:  users.Name,
 	}
@@ -56,7 +57,11 @@ func (u *UserServiceImp) Create(users request.CreateUserReq) error {
 		fmt.Println(err)
 		return err
 	}
-
+	//createUserRes := &response.UserResponse{
+	//	Id:    usersModel.Id,
+	//	Name:  usersModel.Name,
+	//	Email: usersModel.Email,
+	//}
 	fmt.Println("TRDDDDD", usersModel.Id)
 
 	return nil
@@ -64,6 +69,7 @@ func (u *UserServiceImp) Create(users request.CreateUserReq) error {
 }
 
 // Delete implements userService
+
 func (u *UserServiceImp) Delete(userID int) error {
 	// Check if the user with the given ID exists
 	_, err := u.usersRepository.FindById(userID)
@@ -118,6 +124,11 @@ func (u *UserServiceImp) FindById(usersId int) (*Models.User, error) {
 }
 
 func (u *UserServiceImp) Update(user request.UpdateUserReq) error {
+
+	if user.Id == 0 && user.Name == "" && user.Email == "" {
+		return errors.New("at least one field is required for the update")
+	}
+
 	userData, err := u.usersRepository.FindById(user.Id)
 	if err != nil {
 		return err

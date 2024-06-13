@@ -35,18 +35,6 @@ func (u *UserEpoImpl) Delete(userID int) error {
 	return nil
 }
 
-//
-//func (u UserEpoImpl) Delete(userId int) error {
-//	var u_user Models.User
-//	result := u.DB.Where("id=?", userId).Delete(&u_user)
-//
-//	if err := result; err != nil {
-//		return err.Error
-//	}
-//	return nil
-//
-//}
-
 func (u *UserEpoImpl) FindAll() []Models.User {
 	//panic("can't implement me")
 	var users []Models.User
@@ -117,37 +105,11 @@ func (u *UserEpoImpl) Save(user Models.User) error {
 	return nil
 }
 
-//
-//func (u *UserEpoImpl) Save(user Models.User) error {
-//	// Check if the user already exists
-//	existingUser, err := u.FindById(user.Id)
-//	if err != nil {
-//		// If the user does not exist, create a new record
-//		if errors.Is(err, gorm.ErrRecordNotFound) {
-//			result := u.DB.Create(&user)
-//			if result.Error != nil {
-//				return result.Error
-//			}
-//			return nil
-//		}
-//		// Handle other errors
-//		return err
-//	}
-//	// Update the existing user's data
-//	existingUser.UserName = user.UserName
-//	existingUser.Email = user.Email
-//	existingUser.Name = user.Name
-//
-//	// Save the updated user data
-//	result := u.DB.Save(existingUser)
-//	if result.Error != nil {
-//		return result.Error
-//	}
-//
-//	return nil
-//}
-
 func (u *UserEpoImpl) Update(user Models.User) error {
+
+	if user.Id == 0 && user.Email == "" && user.Name == "" {
+		return errors.New("at least one field is required for the update")
+	}
 	// Check if the user exists before updating
 	existingUser, err := u.FindById(user.Id)
 	if err != nil {
@@ -157,6 +119,7 @@ func (u *UserEpoImpl) Update(user Models.User) error {
 
 	// Update the existing user's data
 	//	existingUser.UserName = user.UserName
+
 	existingUser.Email = user.Email
 	existingUser.Name = user.Name
 

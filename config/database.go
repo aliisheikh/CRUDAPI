@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"gorm.io/gorm/logger"
 	"log"
 
 	"gorm.io/driver/mysql"
@@ -24,7 +25,9 @@ func Connect() *gorm.DB {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
 		user, password, host, port, dbname)
 
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Info),
+	})
 	if err != nil {
 		log.Fatalf("failed to connect to the database: %v", err)
 	}

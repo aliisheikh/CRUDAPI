@@ -8,6 +8,7 @@ import (
 type ProfileService interface {
 	CreateP(profile request.CreateProfileReq) error
 	UpdateP(profile request.UpdateProfileReq) error
-	DeleteP(profileId int) error
-	FindByIdP(profileId int) (*Models.ProfileModel, error)
+	DeleteP(userId, profileId int) error
+	FindByIdP(userId, profileId int) (*Models.ProfileModel, error)
+	FindAllProfilesByUserID(userID int) ([]Models.ProfileModel, error)
 }

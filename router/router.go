@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func NewRouter(userController *Controller.UserController) *gin.Engine {
+func NewRouter(userController *Controller.UserController, profileController *Controller.ProfileController) *gin.Engine {
 	router := gin.Default()
 
 	// Define a route for the home endpoint
@@ -18,7 +18,7 @@ func NewRouter(userController *Controller.UserController) *gin.Engine {
 	api := router.Group("/api")
 
 	// Group user-related routes under "/api/user"
-	user := api.Group("/user")
+	user := api.Group("/users")
 	{
 		// Define CRUD routes for users
 		user.POST("", userController.Create)
@@ -26,31 +26,16 @@ func NewRouter(userController *Controller.UserController) *gin.Engine {
 		user.DELETE(":userId", userController.Delete)
 		user.GET(":userId", userController.FindById)
 
+		// Group profile-related routes under "/:userId/profiles"
+		profiles := user.Group("/:userId/profiles")
+		{
+			profiles.POST("", profileController.CreateP)
+			profiles.PUT(":profId", profileController.UpdateP)
+			profiles.DELETE(":profId", profileController.DeleteP)
+			profiles.PATCH(":profId", profileController.FindByIdP)
+			profiles.GET("", profileController.FindAllProfilesByUserID)
+		}
+		//profiles.GET("/:userId/profiles", profileController.FindAllProfilesByUserID)
 	}
 	return router
-}
-
-func NewRouterprof(profileController *Controller.ProfileController) *gin.Engine {
-
-	profilerouter := gin.Default()
-
-	// Define a route for the home endpoint
-	profilerouter.GET("", func(c *gin.Context) {
-		c.JSON(http.StatusOK, "Welcome Home")
-	})
-
-	// Group routes under "/api"
-	api := profilerouter.Group("/api")
-
-	// Group user-related routes under "/api/user"
-	profile := api.Group("/user")
-	{
-		// Define CRUD routes for users
-		profile.POST("", profileController.CreateP)
-		profile.PUT(":profId", profileController.UpdateP)
-		profile.DELETE(":profId", profileController.DeleteP)
-		profile.GET(":profId", profileController.FindByIdP)
-
-	}
-	return profilerouter
 }
