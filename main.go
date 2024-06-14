@@ -13,6 +13,7 @@ import (
 )
 
 func main() {
+
 	log.Info().Msg("Starting Server")
 	// Database
 	db := config.Connect()

@@ -2,7 +2,6 @@ package service
 
 import (
 	"ProjectCRUD/data/request"
-	"ProjectCRUD/data/request/response"
 	Models "ProjectCRUD/models"
 )
 
@@ -11,5 +10,4 @@ type UserService interface {
 	Update(user request.UpdateUserReq) error
 	Delete(userId int) error
 	FindById(userId int) (*Models.User, error)
-	FindAll() []response.UserResponse
 }

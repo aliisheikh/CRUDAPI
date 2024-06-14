@@ -35,16 +35,6 @@ func (u *UserEpoImpl) Delete(userID int) error {
 	return nil
 }
 
-func (u *UserEpoImpl) FindAll() []Models.User {
-	//panic("can't implement me")
-	var users []Models.User
-	result := u.DB.Find(&users)
-	if result != nil {
-		panic(result.Error)
-	}
-	return users
-}
-
 func (u *UserEpoImpl) FindById(userId int) (*Models.User, error) {
 	if userId == 0 {
 		// Return an error indicating that the user ID is invalid

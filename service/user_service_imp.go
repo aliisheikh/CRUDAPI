@@ -2,7 +2,6 @@ package service
 
 import (
 	"ProjectCRUD/data/request"
-	"ProjectCRUD/data/request/response"
 	Models "ProjectCRUD/models"
 	"ProjectCRUD/user_repository"
 	"errors"
@@ -23,12 +22,7 @@ func NewUserServiceImp(usersRepository user_repository.UserEpoImpl, validate *va
 		validate:        validate,
 	}
 }
-
 func (u *UserServiceImp) Create(users request.CreateUserReq) error {
-
-	//if users.UserName == "" {
-	//	return errors.New("username is required")
-	//}
 	if users.Name == "" {
 		return errors.New("name is required")
 	}
@@ -90,22 +84,6 @@ func (u *UserServiceImp) Delete(userID int) error {
 
 	// User successfully deleted
 	return nil
-}
-
-//FindsAll Implements userService
-
-func (u *UserServiceImp) FindAll() []response.UserResponse {
-	result := u.usersRepository.FindAll()
-	var users []response.UserResponse
-	for _, v := range result {
-		user := response.UserResponse{
-			Id: v.Id,
-			//UserName: v.UserName,
-			Name: v.Name,
-		}
-		users = append(users, user)
-	}
-	return users
 }
 
 func (u *UserServiceImp) FindById(usersId int) (*Models.User, error) {

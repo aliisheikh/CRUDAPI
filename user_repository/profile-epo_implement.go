@@ -158,13 +158,13 @@ func (p *ProfileEPOImpl) FindAllProfilesByUserID(userId int) ([]Models.ProfileMo
 	if err := p.DB.Model(&Models.ProfileModel{}).Preload("User").Where("userId = ?", userId).Find(&profiles).Error; err != nil {
 		return nil, err
 	}
-
-	for _, profile := range profiles {
-		profile.User = user
-	}
-
-	//for i := range profiles {
-	//	profiles[i].User = user
+	//
+	//for  profile := range profiles {
+	//	profile.User = user
 	//}
+	////
+	for i := range profiles {
+		profiles[i].User = user
+	}
 	return profiles, nil
 }
