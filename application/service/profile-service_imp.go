@@ -1,21 +1,21 @@
 package service
 
 import (
-	"ProjectCRUD/data/request"
-	Models "ProjectCRUD/models"
-	"ProjectCRUD/user_repository"
+	"ProjectCRUD/application/data"
+	"ProjectCRUD/infrastructure/models"
+	"ProjectCRUD/infrastructure/repositories"
 	"errors"
 	"fmt"
 	"github.com/go-playground/validator/v10"
 )
 
 type ProfileServiceImp struct {
-	profilerepository user_repository.ProfileEPOImpl
-	userRepo          user_repository.UserEpoImpl
+	profilerepository repositories.ProfileEPOImpl
+	userRepo          repositories.UserEpoImpl
 	validate          *validator.Validate
 }
 
-func NewProfileServiceImp(profileRepo user_repository.ProfileEPOImpl, userRepo user_repository.UserEpoImpl, validate *validator.Validate) *ProfileServiceImp {
+func NewProfileServiceImp(profileRepo repositories.ProfileEPOImpl, userRepo repositories.UserEpoImpl, validate *validator.Validate) *ProfileServiceImp {
 	return &ProfileServiceImp{
 		profilerepository: profileRepo,
 		userRepo:          userRepo,
@@ -23,7 +23,7 @@ func NewProfileServiceImp(profileRepo user_repository.ProfileEPOImpl, userRepo u
 	}
 }
 
-func (p *ProfileServiceImp) CreateP(profile request.CreateProfileReq) error {
+func (p *ProfileServiceImp) CreateP(profile data.CreateProfileReq) error {
 
 	//if profile.UserId <= 0 {
 	//	return errors.New("Invalid UserId")
@@ -117,7 +117,7 @@ func (p *ProfileServiceImp) FindByIdP(userId, profileId int) (*Models.ProfileMod
 
 // UpdateP Function for Profile
 
-func (p *ProfileServiceImp) UpdateP(profile request.UpdateProfileReq) error {
+func (p *ProfileServiceImp) UpdateP(profile Models.ProfileModel) error {
 	// Check if no fields are provided for the update
 	if profile.ProfileName == "" && profile.Phone == "" && profile.Address == "" {
 		return errors.New("at least one field is required for the update")

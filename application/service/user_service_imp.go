@@ -1,9 +1,8 @@
 package service
 
 import (
-	"ProjectCRUD/data/request"
-	Models "ProjectCRUD/models"
-	"ProjectCRUD/user_repository"
+	"ProjectCRUD/infrastructure/models"
+	"ProjectCRUD/infrastructure/repositories"
 	"errors"
 	"fmt"
 	"github.com/go-playground/validator/v10"
@@ -12,54 +11,48 @@ import (
 )
 
 type UserServiceImp struct {
-	usersRepository user_repository.UserEpoImpl
+	usersRepository repositories.UserEpoImpl
 	validate        *validator.Validate
 }
 
-func NewUserServiceImp(usersRepository user_repository.UserEpoImpl, validate *validator.Validate) *UserServiceImp {
+func NewUserServiceImp(usersRepository repositories.UserEpoImpl, validate *validator.Validate) *UserServiceImp {
 	return &UserServiceImp{
 		usersRepository: usersRepository,
 		validate:        validate,
 	}
 }
-func (u *UserServiceImp) Create(users request.CreateUserReq) error {
-	if users.Name == "" {
+func (u *UserServiceImp) Create(user Models.User) error {
+	// Validate required fields
+	if user.Name == "" {
 		return errors.New("name is required")
 	}
-	if users.Email == "" {
+	if user.Email == "" {
 		return errors.New("email is required")
-
-	}
-	fmt.Println("kkkkk", users)
-	err := u.validate.Struct(users)
-	if err != nil {
-		return err
 	}
 
-	usersModel := Models.User{
-		//UserName: users.UserName,
-		//Id:    users.Id,
-		Email: users.Email,
-		Name:  users.Name,
+	// Validate user using validator
+	if err := u.validate.Struct(user); err != nil {
+		return fmt.Errorf("validation error: %w", err)
 	}
 
-	err = u.usersRepository.Save1(usersModel)
-	if err != nil {
-		if strings.Contains(err.Error(), "Duplicate entry") {
+	// Prepare user model for persistence
+	userModel := Models.User{
+		Email: user.Email,
+		Name:  user.Name,
+	}
+
+	// Save user to repository
+	if err := u.usersRepository.Save1(&userModel); err != nil {
+		// Handle specific errors
+		switch {
+		case strings.Contains(err.Error(), "Duplicate entry"):
 			return errors.New("email already exists")
+		default:
+			return fmt.Errorf("failed to save user: %w", err)
 		}
-		fmt.Println(err)
-		return err
 	}
-	//createUserRes := &response.UserResponse{
-	//	Id:    usersModel.Id,
-	//	Name:  usersModel.Name,
-	//	Email: usersModel.Email,
-	//}
-	fmt.Println("TRDDDDD", usersModel.Id)
 
 	return nil
-
 }
 
 // Delete implements userService
@@ -101,7 +94,7 @@ func (u *UserServiceImp) FindById(usersId int) (*Models.User, error) {
 	return userResponse, nil
 }
 
-func (u *UserServiceImp) Update(user request.UpdateUserReq) error {
+func (u *UserServiceImp) Update(user Models.User) error {
 
 	if user.Id == 0 && user.Name == "" && user.Email == "" {
 		return errors.New("at least one field is required for the update")

@@ -1,12 +1,12 @@
 package router
 
 import (
-	"ProjectCRUD/Controller"
+	Controller2 "ProjectCRUD/presentation/Controller"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
-func NewRouter(userController *Controller.UserController, profileController *Controller.ProfileController) *gin.Engine {
+func NewRouter(userController *Controller2.UserController, profileController *Controller2.ProfileController) *gin.Engine {
 	router := gin.Default()
 
 	// Define a route for the home endpoint

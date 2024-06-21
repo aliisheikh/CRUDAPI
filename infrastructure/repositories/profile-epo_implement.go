@@ -1,7 +1,7 @@
-package user_repository
+package repositories
 
 import (
-	Models "ProjectCRUD/models"
+	Models2 "ProjectCRUD/infrastructure/models"
 	"errors"
 	"fmt"
 	"gorm.io/gorm"
@@ -20,7 +20,7 @@ func NewProfileRepositoryImp(Db *gorm.DB) *ProfileEPOImpl {
 
 func (p *ProfileEPOImpl) DeleteP(userid, profId int) error {
 
-	profiles := Models.ProfileModel{ProfileId: profId, UserID: userid}
+	profiles := Models2.ProfileModel{ProfileId: profId, UserID: userid}
 	result := p.DB.Where(&profiles).First(&profiles)
 	if result.Error != nil {
 		// Check if the user doesn't exist
@@ -42,7 +42,7 @@ func (p *ProfileEPOImpl) DeleteP(userid, profId int) error {
 	return nil
 }
 
-func (p *ProfileEPOImpl) FindByIdP(userId, profId int) (*Models.ProfileModel, error) {
+func (p *ProfileEPOImpl) FindByIdP(userId, profId int) (*Models2.ProfileModel, error) {
 
 	if userId == 0 {
 		return nil, errors.New("invalid userId")
@@ -52,7 +52,7 @@ func (p *ProfileEPOImpl) FindByIdP(userId, profId int) (*Models.ProfileModel, er
 		// Return an error indicating that the user ID is invalid
 		return nil, errors.New("invalid profile ID")
 	}
-	var profile Models.ProfileModel
+	var profile Models2.ProfileModel
 	result := p.DB.Preload("User").First(&profile, "Id = ? AND userId = ?", profId, userId)
 
 	if result.Error != nil {
@@ -68,7 +68,7 @@ func (p *ProfileEPOImpl) FindByIdP(userId, profId int) (*Models.ProfileModel, er
 
 // Update function for profile
 
-func (p *ProfileEPOImpl) UpdateP(profile Models.ProfileModel) error {
+func (p *ProfileEPOImpl) UpdateP(profile Models2.ProfileModel) error {
 
 	if profile.ProfileName == "" && profile.Phone == "" && profile.Address == "" {
 		return errors.New("at least one field is required for the update")
@@ -95,7 +95,7 @@ func (p *ProfileEPOImpl) UpdateP(profile Models.ProfileModel) error {
 
 // Save function for profile(UPDATE, DELETE,GET)
 
-func (p *ProfileEPOImpl) Save2(profile Models.ProfileModel) error {
+func (p *ProfileEPOImpl) Save2(profile Models2.ProfileModel) error {
 	// Check if the user already exists
 	existingProfile, err := p.FindByIdP(profile.UserID, profile.ProfileId)
 	if err != nil {
@@ -120,12 +120,12 @@ func (p *ProfileEPOImpl) Save2(profile Models.ProfileModel) error {
 	return nil
 }
 
-func (p *ProfileEPOImpl) SaveCreate(profile Models.ProfileModel, userID int) error {
+func (p *ProfileEPOImpl) SaveCreate(profile Models2.ProfileModel, userID int) error {
 	// Set the UserID for the profile
 	profile.UserID = userID
 
 	// Check if the UserID exists in the users table
-	var user Models.User
+	var user Models2.User
 	if err := p.DB.First(&user, profile.UserID).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return errors.New("user with the given ID does not exist")
@@ -142,9 +142,9 @@ func (p *ProfileEPOImpl) SaveCreate(profile Models.ProfileModel, userID int) err
 	return nil
 }
 
-func (p *ProfileEPOImpl) FindAllProfilesByUserID(userId int) ([]Models.ProfileModel, error) {
-	var profiles []Models.ProfileModel
-	var user Models.User
+func (p *ProfileEPOImpl) FindAllProfilesByUserID(userId int) ([]Models2.ProfileModel, error) {
+	var profiles []Models2.ProfileModel
+	var user Models2.User
 
 	if err := p.DB.First(&user, userId).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -155,13 +155,14 @@ func (p *ProfileEPOImpl) FindAllProfilesByUserID(userId int) ([]Models.ProfileMo
 		return nil, fmt.Errorf("failed to retrieve user: %w", err)
 	}
 	// Use Preload to include the associated User data
-	if err := p.DB.Model(&Models.ProfileModel{}).Preload("User").Where("userId = ?", userId).Find(&profiles).Error; err != nil {
+	if err := p.DB.Model(&Models2.ProfileModel{}).Preload("User").Where("userId = ?", userId).Find(&profiles).Error; err != nil {
 		return nil, err
 	}
 	//
 	//for  profile := range profiles {
 	//	profile.User = user
 	//}
+	//return profiles, nil
 	////
 	for i := range profiles {
 		profiles[i].User = user

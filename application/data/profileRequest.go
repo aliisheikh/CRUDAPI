@@ -1,4 +1,4 @@
-package request
+package data
 
 import (
 	"github.com/gin-gonic/gin"

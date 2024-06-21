@@ -1,6 +1,8 @@
-package user_repository
+package repositories
 
-import Models "ProjectCRUD/models"
+import (
+	"ProjectCRUD/infrastructure/models"
+)
 
 type ProfileRepository interface {
 	Save2(prof *Models.ProfileModel) error

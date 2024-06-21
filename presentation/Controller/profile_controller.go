@@ -1,8 +1,9 @@
 package Controller
 
 import (
-	"ProjectCRUD/data/request"
-	"ProjectCRUD/service"
+	"ProjectCRUD/application/data"
+	"ProjectCRUD/domain/services"
+	"ProjectCRUD/infrastructure/models"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -10,10 +11,10 @@ import (
 )
 
 type ProfileController struct {
-	profileService service.ProfileService
+	profileService services.ProfileService
 }
 
-func NewProfileController(profileService service.ProfileService) *ProfileController {
+func NewProfileController(profileService services.ProfileService) *ProfileController {
 	return &ProfileController{
 		profileService: profileService,
 	}
@@ -31,7 +32,7 @@ func (profilecontroller *ProfileController) CreateP(ctx *gin.Context) {
 	}
 
 	// Initialize a CreateProfileReq instance
-	var createProfileRequest request.CreateProfileReq
+	var createProfileRequest data.CreateProfileReq
 
 	// Bind JSON data from the request to createProfileRequest
 	if err := ctx.ShouldBindJSON(&createProfileRequest); err != nil {
@@ -77,8 +78,9 @@ func (profilecontroller *ProfileController) UpdateP(c *gin.Context) {
 	}
 
 	// Parse the JSON request body into update user request struct
-	var updateProfileRequest request.UpdateProfileReq
+	var updateProfileRequest Models.ProfileModel
 	if err := c.ShouldBindJSON(&updateProfileRequest); err != nil {
+		fmt.Println("tdddrrr")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data"})
 		return
 	}
@@ -94,9 +96,9 @@ func (profilecontroller *ProfileController) UpdateP(c *gin.Context) {
 
 	// Set the ID fields of UpdateProfileRequest with the values from the path
 	updateProfileRequest.ProfileId = profIdInt
-	updateProfileRequest.UserId = userIdInt
+	updateProfileRequest.UserID = userIdInt
 
-	// Call the service method to update the user
+	// Call the services method to update the user
 	if err := profilecontroller.profileService.UpdateP(updateProfileRequest); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update profile"})
 		return
@@ -177,7 +179,7 @@ func (profileController *ProfileController) FindAllProfilesByUserID(ctx *gin.Con
 		return
 	}
 
-	// Call the service method to fetch all profiles by user ID
+	// Call the services method to fetch all profiles by user ID
 	profiles, err := profileController.profileService.FindAllProfilesByUserID(userID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch profiles", "Internal": err.Error()})

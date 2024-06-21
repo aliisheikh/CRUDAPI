@@ -1,7 +1,7 @@
-package user_repository
+package repositories
 
 import (
-	Models "ProjectCRUD/models"
+	"ProjectCRUD/infrastructure/models"
 	"errors"
 	"gorm.io/gorm"
 	"strings"
@@ -55,14 +55,15 @@ func (u *UserEpoImpl) FindById(userId int) (*Models.User, error) {
 }
 
 // For just simple POST
-
-func (u *UserEpoImpl) Save1(user Models.User) error {
-	// Save the user directly, GORM will handle whether it's a new user or an existing one
-	result := u.DB.Save(&user)
+func (u *UserEpoImpl) Save1(user *Models.User) error {
+	// Save the user directly; GORM will handle whether it's a new user or an existing one
+	result := u.DB.Save(user)
 	if result.Error != nil {
+		// Check for specific errors
 		if strings.Contains(result.Error.Error(), "duplicate key value violates unique constraint") {
 			return errors.New("user already exists")
 		}
+		// Return the actual GORM error for other cases
 		return result.Error
 	}
 	return nil

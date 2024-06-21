@@ -1,9 +1,8 @@
 package Controller
 
 import (
-	"ProjectCRUD/data/request"
-	"ProjectCRUD/data/request/response"
-	"ProjectCRUD/service"
+	"ProjectCRUD/domain/services"
+	"ProjectCRUD/infrastructure/models"
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -15,24 +14,23 @@ import (
 )
 
 type UserController struct {
-	userService service.UserService
+	userService services.UserService
 	//deletedUsers map[int]bool
 }
 
-func NewUserController(userService service.UserService) *UserController {
+func NewUserController(userService services.UserService) *UserController {
 	return &UserController{
 		userService: userService,
 	}
 }
 
 // Original Create function
-
 func (userController *UserController) Create(ctx *gin.Context) {
-	// Initialize a CreateUserReq instance
-	var createuserrequest request.CreateUserReq
+	// Initialize a User instance
+	var createUserRequest Models.User
 
-	// Bind JSON data from the request to createuserrequest
-	if err := ctx.ShouldBindJSON(&createuserrequest); err != nil {
+	// Bind JSON data from the request to createUserRequest
+	if err := ctx.ShouldBindJSON(&createUserRequest); err != nil {
 		// If JSON binding fails, respond with a bad request error
 		var errorMsg string
 		if verr, ok := err.(validator.ValidationErrors); ok {
@@ -43,32 +41,26 @@ func (userController *UserController) Create(ctx *gin.Context) {
 			}
 			errorMsg = fmt.Sprintf("Missing or invalid fields: %s", strings.Join(fields, ", "))
 		} else {
-			errorMsg = "Failed to Parse JSON"
+			errorMsg = "Failed to parse JSON"
 		}
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": errorMsg})
 		return
 	}
 
 	// Create the user using the userService
-	if err := userController.userService.Create(createuserrequest); err != nil {
-		// duplicate email error
-		if strings.Contains(err.Error(), "Duplicate entry") {
+	if err := userController.userService.Create(createUserRequest); err != nil {
+		// Handle specific errors
+		switch {
+		case strings.Contains(err.Error(), "Duplicate entry"):
 			ctx.JSON(http.StatusConflict, gin.H{"error": "Email already exists"})
-			return
+		default:
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "email already exist"})
 		}
-
-		// If user creation fails, respond with an internal server error
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "email already exists"})
 		return
 	}
 
 	// Respond with a success message and status code 201 Created
-	webResponse := response.WebResponse{
-		Code:   http.StatusCreated,
-		Status: "success",
-		Data:   createuserrequest, // You can choose to include the created user data here
-	}
-	ctx.JSON(http.StatusCreated, webResponse)
+	ctx.JSON(http.StatusCreated, gin.H{"message": "User created successfully"})
 }
 
 // Update user
@@ -83,8 +75,11 @@ func (userController *UserController) Update(c *gin.Context) {
 	}
 
 	// Parse the JSON request body into update user request struct
-	var updateuserrequest request.UpdateUserReq
+
+	// change request to model
+	var updateuserrequest Models.User
 	if err := c.ShouldBindJSON(&updateuserrequest); err != nil {
+
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user data"})
 		return
 	}
@@ -96,7 +91,7 @@ func (userController *UserController) Update(c *gin.Context) {
 	// Set the ID field of UpdateUserRequest with the id value
 	updateuserrequest.Id = id
 
-	// Call the service method to update the user
+	// Call the services method to update the user
 	if err := userController.userService.Update(updateuserrequest); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})
 		return

@@ -2,34 +2,46 @@ package config
 
 import (
 	"fmt"
-	"gorm.io/gorm/logger"
 	"log"
+	"os"
+	"strconv"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-)
+	"gorm.io/gorm/logger"
 
-//os.GETENV() main
-
-//os.GETENV("DBHOST")  .env DBHOST=localhost
-
-const (
-	host     = "localhost"
-	port     = 3306
-	user     = "root"
-	password = "QwE1234$$"
-	dbname   = "my_database"
+	"github.com/joho/godotenv"
 )
 
 func Connect() *gorm.DB {
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
-		user, password, host, port, dbname)
+	// Load environment variables from .env file
+	if err := godotenv.Load(); err != nil {
+		log.Fatalf("Error loading .env file: %v", err)
+	}
 
+	// Retrieve environment variables or use default values
+	dbHost := os.Getenv("DB_HOST")
+	dbPortStr := os.Getenv("DB_PORT")
+	dbUser := os.Getenv("DB_USER")
+	dbPassword := os.Getenv("DB_PASSWORD")
+	dbName := os.Getenv("DB_NAME")
+
+	// Convert dbPort from string to int
+	dbPort, err := strconv.Atoi(dbPortStr)
+	if err != nil {
+		log.Fatalf("Invalid DB_PORT: %v", err)
+	}
+
+	// Construct DSN (Data Source Name) for GORM
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		dbUser, dbPassword, dbHost, dbPort, dbName)
+
+	// Connect to the database
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
 	})
 	if err != nil {
-		log.Fatalf("failed to connect to the database: %v", err)
+		log.Fatalf("Failed to connect to the database: %v", err)
 	}
 
 	return db
